@@ -1,0 +1,125 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - menubar [ref=e4]:
+        - menuitem "File" [ref=e5]
+        - menuitem "Edit" [ref=e6]
+        - menuitem "View" [ref=e7]
+        - menuitem "Model" [ref=e8]
+        - menuitem "Help" [ref=e9]
+      - button "Share" [ref=e10]
+    - generic [ref=e11]:
+      - complementary [ref=e13]:
+        - generic [ref=e14]:
+          - heading "Image Upload" [level=3] [ref=e16]:
+            - button "Image Upload" [ref=e17]:
+              - text: Image Upload
+              - img
+          - heading "Gallery" [level=3] [ref=e19]:
+            - button "Gallery" [ref=e20]:
+              - text: Gallery
+              - img
+          - heading "Image" [level=3] [ref=e22]:
+            - button "Image" [ref=e23]:
+              - text: Image
+              - img
+          - heading "Data" [level=3] [ref=e25]:
+            - button "Data" [ref=e26]:
+              - text: Data
+              - img
+          - heading "Train" [level=3] [ref=e28]:
+            - button "Train" [ref=e29]:
+              - text: Train
+              - img
+      - separator [ref=e30]
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - heading [level=1]
+          - separator [ref=e38]
+          - generic [ref=e39]:
+            - generic [ref=e40]:
+              - button "merge select" [ref=e41]:
+                - img
+              - button "remove select" [ref=e42]:
+                - img
+            - textbox [ref=e43]
+            - paragraph [ref=e45]: "tokens: 0 / 77"
+        - button [ref=e47] [cursor=pointer]:
+          - img
+      - separator [ref=e48]
+      - generic [ref=e50]:
+        - generic [ref=e52]:
+          - generic [ref=e53]:
+            - button [ref=e54] [cursor=pointer]:
+              - img [ref=e55] [cursor=pointer]
+            - button [ref=e57] [cursor=pointer]:
+              - img [ref=e58] [cursor=pointer]
+            - paragraph [ref=e60]: 0/0
+          - generic [ref=e62]:
+            - img [ref=e63]
+            - button [ref=e65]
+        - separator [ref=e70]
+        - generic [ref=e71]:
+          - button "Fill Mask" [ref=e75] [cursor=pointer]
+          - generic [ref=e76]:
+            - tablist [ref=e77]:
+              - tab "Generate" [selected] [ref=e78]
+              - tab "Img2Img" [ref=e79]
+              - tab "Inpaint" [ref=e80]
+            - tabpanel "Generate" [ref=e81]:
+              - generic [ref=e82]:
+                - group "Prompt" [ref=e83]:
+                  - generic [ref=e84]: Prompt
+                  - textbox [ref=e85]
+                - group "Negative Prompt" [ref=e86]:
+                  - generic [ref=e87]: Negative Prompt
+                  - textbox [ref=e88]
+                - group "Prompt 2" [ref=e89]:
+                  - generic [ref=e90]: Prompt 2
+                  - textbox [ref=e91]
+                - group "Negative Prompt 2" [ref=e92]:
+                  - generic [ref=e93]: Negative Prompt 2
+                  - textbox [ref=e94]
+      - separator [ref=e95]
+      - complementary [ref=e97]:
+        - generic [ref=e99]:
+          - generic [ref=e100]:
+            - heading "Image" [level=3] [ref=e102]:
+              - button "Image" [ref=e103]:
+                - img
+                - text: Image
+            - heading "Generation" [level=3] [ref=e105]:
+              - button "Generation" [ref=e106]:
+                - img
+                - text: Generation
+            - heading "Img2Img" [level=3] [ref=e108]:
+              - button "Img2Img" [ref=e109]:
+                - img
+                - text: Img2Img
+            - heading "Inpaint" [level=3] [ref=e111]:
+              - button "Inpaint" [ref=e112]:
+                - img
+                - text: Inpaint
+            - heading "Scratch" [level=3] [ref=e114]:
+              - button "Scratch" [ref=e115]:
+                - img
+                - text: Scratch
+          - table [ref=e117]:
+            - rowgroup [ref=e118]:
+              - row "Active Layer Visible Opacity" [ref=e119]:
+                - cell "Active" [ref=e120]
+                - cell "Layer" [ref=e121]
+                - cell "Visible" [ref=e122]
+                - cell "Opacity" [ref=e123]
+            - rowgroup [ref=e124]:
+              - row "No results." [ref=e125]:
+                - cell "No results." [ref=e126]
+  - region "Notifications alt+T"
+  - alert [ref=e127]
+  - button "Open Next.js Dev Tools" [ref=e133] [cursor=pointer]:
+    - img [ref=e134] [cursor=pointer]
+```
