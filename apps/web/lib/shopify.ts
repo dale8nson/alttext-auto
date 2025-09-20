@@ -1,13 +1,16 @@
 import "@shopify/shopify-api/adapters/node";
 import { shopifyApi, ApiVersion } from "@shopify/shopify-api";
 
+const appUrl = (process.env.SHOPIFY_APP_URL || 'http://localhost:3000');
+const hostName = appUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+
 export const shopify = shopifyApi({
   apiKey: process.env.SHOPIFY_API_KEY!,
   apiSecretKey: process.env.SHOPIFY_API_SECRET!,
   scopes: (process.env.SHOPIFY_SCOPES || "").split(","),
   isEmbeddedApp: false,
   apiVersion: ApiVersion.January25,
-  hostName: process.env.SHOPIFY_APP_URL!.replace(/^https?:\/\//, ""),
+  hostName,
 } as any);
 
 export function getSession(shop: string, accessToken: string) {
