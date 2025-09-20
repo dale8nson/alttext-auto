@@ -1,0 +1,16 @@
+node_modules/
+.next/
+.vercel/
+dist/
+.DS_Store
+*.log
+*.sqlite
+*.db
+venv/
+.venv/
+__pycache__/
+apps/web/prisma/dev.db
+apps/web/.env.local
+apps/web/.env
+apps/worker/.env
+*.env
