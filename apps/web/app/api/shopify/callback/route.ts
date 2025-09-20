@@ -1,4 +1,4 @@
-import { shopify } from "../../../../lib/shopify";
+import { getShopify } from "../../../../lib/shopify";
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -7,6 +7,7 @@ export const runtime = "nodejs";
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
+  const shopify = getShopify();
   const { session } = await shopify.auth.callback({
     rawRequest: req as any,
     rawResponse: new Response(),
