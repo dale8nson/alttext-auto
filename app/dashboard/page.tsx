@@ -89,4 +89,4 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 // export const dynamic = "force-dynamic";
 export const revalidate = 0;
-export const runtime = "nodejs";
+export const runtime = "nodejs"; 
