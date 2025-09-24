@@ -4,9 +4,22 @@ import { shopifyApi, ApiVersion } from "@shopify/shopify-api";
 export function getShopify() {
   const appUrl = process.env.SHOPIFY_APP_URL || "http://localhost:3000";
   const hostName = appUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
-  const apiKey = process.env.SHOPIFY_API_KEY || "";
-  const apiSecretKey = process.env.SHOPIFY_API_SECRET || "";
-  const scopes = (process.env.SHOPIFY_SCOPES || "").split(",");
+  const apiKey =
+    process.env.SHOPIFY_API_KEY || process.env.NEXT_PUBLIC_SHOPIFY_API_KEY;
+  const apiSecretKey = process.env.SHOPIFY_API_SECRET;
+  const scopes = (process.env.SHOPIFY_SCOPES || "")
+    .split(",")
+    .map((scope) => scope.trim())
+    .filter(Boolean);
+
+  if (!apiKey) {
+    throw new Error("Missing SHOPIFY_API_KEY environment variable");
+  }
+
+  if (!apiSecretKey) {
+    throw new Error("Missing SHOPIFY_API_SECRET environment variable");
+  }
+
   // Create instance lazily at runtime to avoid build-time env requirement
   return shopifyApi({
     apiKey,
