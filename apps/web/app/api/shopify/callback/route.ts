@@ -9,9 +9,8 @@ const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   const shopify = getShopify();
-  const { session } = await shopify.auth.callback({
+  const { session, headers } = await shopify.auth.callback({
     rawRequest: req as any,
-    rawResponse: new Response(),
   });
 
   const shop = session.shop as string;
@@ -38,6 +37,44 @@ export async function GET(req: NextRequest) {
     })
   );
 
-  const appUrl = process.env.SHOPIFY_APP_URL;
-  return NextResponse.redirect(`${appUrl}/dashboard?installed=1`);
+  const appUrl = process.env.SHOPIFY_APP_URL || "http://localhost:3000";
+  const redirectResponse = NextResponse.redirect(`${appUrl}/dashboard?installed=1`);
+
+  if (headers) {
+    const headerEntries: Array<[string, string]> = [];
+
+    const getSetCookie = (headers as any)?.getSetCookie?.bind(headers);
+    if (typeof getSetCookie === "function") {
+      const cookies = getSetCookie();
+      if (Array.isArray(cookies)) {
+        cookies.forEach((cookie: string) => {
+          headerEntries.push(["set-cookie", cookie]);
+        });
+      }
+    }
+
+    if (headerEntries.length === 0) {
+      if (headers instanceof Headers) {
+        headers.forEach((value, key) => headerEntries.push([key, value]));
+      } else if (typeof headers === "object") {
+        Object.entries(headers).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach((item) => headerEntries.push([key, String(item)]));
+          } else if (value != null) {
+            headerEntries.push([key, String(value)]);
+          }
+        });
+      }
+    }
+
+    headerEntries.forEach(([key, value]) => {
+      if (key.toLowerCase() === "set-cookie") {
+        redirectResponse.headers.append("set-cookie", value);
+      } else if (!redirectResponse.headers.has(key)) {
+        redirectResponse.headers.set(key, value);
+      }
+    });
+  }
+
+  return redirectResponse;
 }

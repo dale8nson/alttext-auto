@@ -9,12 +9,11 @@ export async function GET(req: NextRequest) {
   if (!shop) return NextResponse.json({ error: "Missing shop" }, { status: 400 });
 
   const shopify = getShopify();
-  const authRoute = await shopify.auth.begin({
+  const authResponse = await shopify.auth.begin({
     shop,
     callbackPath: "/api/shopify/callback",
     isOnline: false,
     rawRequest: req as any,
-    rawResponse: new Response(),
   });
-  return NextResponse.redirect(authRoute, 302);
+  return authResponse as Response;
 }
