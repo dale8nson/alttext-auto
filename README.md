@@ -47,7 +47,7 @@ alttext-saas/
 ## Notes
 
 - Webhook verification expects Node runtime in Next.js API routes.
-- `DATABASE_URL=file:./dev.db` stores sqlite under `apps/web/prisma/dev.db`.
+- Database uses PostgreSQL; point `DATABASE_URL` at your managed instance (Neon, Supabase, RDS, etc.).
 - Worker `naive_alt` is a placeholder; replace with a model later.
 
 ## License
@@ -61,7 +61,7 @@ Proprietary (placeholder). Update as needed.
    - `NEXT_PUBLIC_STRIPE_PRICE_STARTER`, `NEXT_PUBLIC_STRIPE_PRICE_GROWTH`, `NEXT_PUBLIC_STRIPE_PRICE_PRO` (optional for UI)
    - `WORKER_URL`, `DATABASE_URL`
 
-2. Run `npx prisma db push` once against your production database.
+2. Run `npx prisma migrate deploy` (or rely on `npm run build`, which runs it automatically) against your production database.
 
 3. In Stripe, add a webhook endpoint to `https://YOUR_DOMAIN/api/billing/webhook` and enable events:
    - `checkout.session.completed`
@@ -109,7 +109,7 @@ This starts the FastAPI worker on 127.0.0.1:8000 and Next.js on 3000. Ctrl+C sto
   - Enable events: `checkout.session.completed`, `customer.subscription.deleted`
 
 - Database
-  - Set `DATABASE_URL` (SQLite or Postgres) and run `npx prisma db push`
+- Set `DATABASE_URL` (Postgres) and run `npx prisma migrate deploy`
 
 - Worker
   - Deploy and expose HTTPS; configure `WORKER_URL`
