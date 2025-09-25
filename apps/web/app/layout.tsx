@@ -62,6 +62,7 @@ function Header() {
           <span className="font-semibold dark:text-slate-100">AltText Auto</span>
         </a>
         <nav className="flex items-center gap-2" aria-label="Primary actions">
+          <Button href="/demo" variant="ghost">Demo</Button>
           <Button href="/dashboard" variant="ghost">Dashboard</Button>
           <InstallButton>Install</InstallButton>
           <Button href="/settings" variant="ghost">Settings</Button>
