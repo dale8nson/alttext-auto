@@ -47,7 +47,7 @@ alttext-saas/
 ## Notes
 
 - Webhook verification expects Node runtime in Next.js API routes.
-- Database uses PostgreSQL; point `DATABASE_URL` at your managed instance (Neon, Supabase, RDS, etc.).
+- Database uses PostgreSQL; point `DATABASE_URL` at your pooled connection (if using PgBouncer) and `DATABASE_DIRECT_URL` at a direct port 5432 connection for migrations.
 - Worker `naive_alt` is a placeholder; replace with a model later.
 
 ## License
@@ -59,9 +59,9 @@ Proprietary (placeholder). Update as needed.
    - `SHOPIFY_API_KEY`, `NEXT_PUBLIC_SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOPIFY_SCOPES`, `SHOPIFY_APP_URL`
    - `STRIPE_SECRET_KEY`, `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH`, `STRIPE_PRICE_PRO`, `STRIPE_WEBHOOK_SECRET`
    - `NEXT_PUBLIC_STRIPE_PRICE_STARTER`, `NEXT_PUBLIC_STRIPE_PRICE_GROWTH`, `NEXT_PUBLIC_STRIPE_PRICE_PRO` (optional for UI)
-   - `WORKER_URL`, `DATABASE_URL`
+   - `WORKER_URL`, `DATABASE_URL`, `DATABASE_DIRECT_URL`
 
-2. Run `npx prisma migrate deploy` (or rely on `npm run build`, which runs it automatically) against your production database.
+2. Run `npx prisma migrate deploy` (or rely on `npm run build`, which uses `DATABASE_DIRECT_URL` when provided) against your production database.
 
 3. In Stripe, add a webhook endpoint to `https://YOUR_DOMAIN/api/billing/webhook` and enable events:
    - `checkout.session.completed`
@@ -95,7 +95,7 @@ This starts the FastAPI worker on 127.0.0.1:8000 and Next.js on 3000. Ctrl+C sto
   - Web (.env): `SHOPIFY_API_KEY`, `NEXT_PUBLIC_SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOPIFY_SCOPES`, `SHOPIFY_APP_URL`
   - Web (.env): `STRIPE_SECRET_KEY`, `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH`, `STRIPE_PRICE_PRO`, `STRIPE_WEBHOOK_SECRET`
   - Web (.env): `NEXT_PUBLIC_STRIPE_PRICE_STARTER`, `NEXT_PUBLIC_STRIPE_PRICE_GROWTH`, `NEXT_PUBLIC_STRIPE_PRICE_PRO` (optional UI)
-  - Web (.env): `WORKER_URL`, `DATABASE_URL`
+  - Web (.env): `WORKER_URL`, `DATABASE_URL`, `DATABASE_DIRECT_URL`
   - Worker (.env): none required for MVP
 
 - Shopify configuration
@@ -109,7 +109,7 @@ This starts the FastAPI worker on 127.0.0.1:8000 and Next.js on 3000. Ctrl+C sto
   - Enable events: `checkout.session.completed`, `customer.subscription.deleted`
 
 - Database
-- Set `DATABASE_URL` (Postgres) and run `npx prisma migrate deploy`
+  - Set `DATABASE_URL`/`DATABASE_DIRECT_URL` (Postgres) and run `npx prisma migrate deploy`
 
 - Worker
   - Deploy and expose HTTPS; configure `WORKER_URL`

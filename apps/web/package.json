@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma migrate deploy && next build",
+    "build": "if [ -n \"$DATABASE_DIRECT_URL\" ]; then echo 'Running prisma migrate deploy with DATABASE_DIRECT_URL'; DATABASE_URL=\"$DATABASE_DIRECT_URL\" prisma migrate deploy; else echo 'Skipping prisma migrate deploy (set DATABASE_DIRECT_URL to enable)'; fi && next build",
     "start": "next start",
     "prisma:push": "prisma db push",
     "postinstall": "prisma generate",
