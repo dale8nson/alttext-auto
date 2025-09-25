@@ -39,7 +39,7 @@ alttext-saas/
 - Scopes: `read_products,write_products,read_product_listings`.
 - Install URL: `/install` (prompts for your Shopify store domain before redirecting to Shopify).
 - Compliance webhooks: `customers/data_request`, `customers/redact`, and `shop/redact` all point to `/api/webhooks/compliance` and HMAC verification is enforced.
-- Public demo: `/demo` renders a sample dashboard merchants can explore without installing the app.
+- Public demo: `/demo` renders a sample dashboard. Replace `apps/web/public/dashboard-preview.png` with a real dashboard screenshot from your deployment so marketing pages reflect the live product.
 
 ## Billing (Stripe)
 

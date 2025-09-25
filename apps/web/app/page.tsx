@@ -88,8 +88,8 @@ export default function Home({ searchParams }: HomeProps) {
         <Card className="flex items-center justify-center">
           <figure className="w-full">
             <img
-              src="/demo-screenshot.png"
-              alt="Dashboard card showing a generated alt text for a product image"
+              src="/dashboard-preview.png"
+              alt="Screenshot of the AltText Auto dashboard showing generated alt text"
               className="aspect-[16/9] w-full rounded-lg border border-slate-200 shadow-sm dark:border-slate-700"
             />
             <figcaption className="mt-2 text-center text-sm muted">Example — product image updated with alt text</figcaption>
