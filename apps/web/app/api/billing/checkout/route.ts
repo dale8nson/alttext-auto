@@ -1,10 +1,8 @@
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 
 export const runtime = "nodejs";
 
-const prisma = new PrismaClient();
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY || "";
   // Instantiate lazily to avoid build-time env issues

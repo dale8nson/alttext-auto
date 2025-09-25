@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { PrismaClient } from "@prisma/client";
+import { prisma, ensureDatabase } from "@/lib/prisma";
 
 export const runtime = "nodejs";
-
-const prisma = new PrismaClient();
 
 function verifyHmac(req: NextRequest, rawBody: string) {
   const hmac = req.headers.get("x-shopify-hmac-sha256") || "";
@@ -21,6 +19,7 @@ function verifyHmac(req: NextRequest, rawBody: string) {
 }
 
 export async function POST(req: NextRequest) {
+  await ensureDatabase();
   const rawBody = await req.text();
   if (!verifyHmac(req, rawBody)) {
     return NextResponse.json({ ok: false }, { status: 401 });

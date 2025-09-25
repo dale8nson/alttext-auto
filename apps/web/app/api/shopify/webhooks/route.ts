@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma, ensureDatabase } from "@/lib/prisma";
 
 export const runtime = "nodejs";
-const prisma = new PrismaClient();
-
 export async function GET(req: NextRequest) {
+  await ensureDatabase();
   const { searchParams } = new URL(req.url);
   const shopParam = searchParams.get("shop");
   const shopRow = shopParam ? await prisma.shop.findUnique({ where: { shop: shopParam } }) : await prisma.shop.findFirst();
@@ -26,4 +25,3 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ok: false, error: String(e) }, { status: 500 });
   }
 }
-

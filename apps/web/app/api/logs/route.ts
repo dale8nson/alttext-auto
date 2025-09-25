@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma, ensureDatabase } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-const prisma = new PrismaClient();
-
 export async function GET(req: NextRequest) {
+  await ensureDatabase();
   const { searchParams } = new URL(req.url);
   const shop = searchParams.get("shop") || undefined;
   const take = Math.min(parseInt(searchParams.get("take") || "10", 10), 100);

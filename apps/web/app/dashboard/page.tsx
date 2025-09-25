@@ -1,14 +1,13 @@
 import dynamic from "next/dynamic";
-import { PrismaClient } from "@prisma/client";
+import { prisma, ensureDatabase } from "@/lib/prisma";
 import { InstallButton } from "@/components/install-button";
 const LogsTable = dynamic(() => import("@/components/dashboard/LogsTable"), { ssr: false });
 const WebhooksHealth = dynamic(() => import("@/components/dashboard/WebhooksHealth"), { ssr: false });
 const Parallax = dynamic(() => import("@/components/visuals/parallax").then(m => m.Parallax), { ssr: false });
 const Layer = dynamic(() => import("@/components/visuals/parallax").then(m => m.Layer), { ssr: false });
 
-const prisma = new PrismaClient();
-
 export default async function Dashboard() {
+  await ensureDatabase();
   const shop = await prisma.shop.findFirst();
   const shopDomain = shop?.shop;
   const logs = await prisma.log.findMany({ where: shopDomain ? { shop: shopDomain } : {}, orderBy: { createdAt: 'desc' }, take: 10 });

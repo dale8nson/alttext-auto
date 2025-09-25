@@ -1,10 +1,8 @@
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma, ensureDatabase } from "@/lib/prisma";
 
 export const runtime = "nodejs";
-
-const prisma = new PrismaClient();
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY || "";
@@ -22,6 +20,7 @@ function planFromPrice(priceId: string | undefined) {
 }
 
 export async function POST(req: NextRequest) {
+  await ensureDatabase();
   const signature = req.headers.get("stripe-signature") || "";
   const rawBody = await req.text();
 
@@ -55,4 +54,3 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ received: true });
 }
-
