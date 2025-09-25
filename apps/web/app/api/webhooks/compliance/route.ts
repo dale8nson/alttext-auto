@@ -29,16 +29,14 @@ export async function POST(req: NextRequest) {
   try {
     const shop = req.headers.get("x-shopify-shop-domain") || "";
     const payload = JSON.parse(rawBody);
-    await prisma.log.create({
-      data: {
-        shop,
-        productId: payload?.shop_id ? String(payload.shop_id) : "",
-        imageId: payload?.customer?.id ? String(payload.customer.id) : "",
-        alt: payload?.customer?.email ?? "",
-        ok: true,
-        msg: payload?.topic ?? "compliance_event",
-      },
-    });
+    const topic = payload?.topic ?? "";
+
+    if (topic === "shop/redact") {
+      await prisma.log.deleteMany({ where: { shop } });
+      await prisma.shop.deleteMany({ where: { shop } });
+    } else if (topic === "customers/redact") {
+      await prisma.log.deleteMany({ where: { shop } });
+    }
   } catch (error) {
     console.error("Compliance webhook handling failed", error);
   }
