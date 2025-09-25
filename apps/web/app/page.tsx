@@ -87,9 +87,11 @@ export default function Home({ searchParams }: HomeProps) {
         </Card>
         <Card className="flex items-center justify-center">
           <figure className="w-full">
-            <div className="aspect-[16/9] w-full overflow-hidden rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900" aria-label="Screenshot placeholder">
-              <div className="h-full w-full animate-float bg-[radial-gradient(circle_at_30%_20%,rgba(30,169,255,0.25),transparent_60%),radial-gradient(circle_at_70%_60%,rgba(16,185,129,0.25),transparent_55%)]" />
-            </div>
+            <img
+              src="/demo-screenshot.png"
+              alt="Dashboard card showing a generated alt text for a product image"
+              className="aspect-[16/9] w-full rounded-lg border border-slate-200 shadow-sm dark:border-slate-700"
+            />
             <figcaption className="mt-2 text-center text-sm muted">Example — product image updated with alt text</figcaption>
           </figure>
         </Card>
