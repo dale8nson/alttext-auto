@@ -38,6 +38,7 @@ alttext-saas/
 - Use App URL: your web app URL (e.g. `http://localhost:3000`).
 - Scopes: `read_products,write_products,read_product_listings`.
 - Install URL: `/install` (prompts for your Shopify store domain before redirecting to Shopify).
+- Compliance webhooks: `customers/data_request`, `customers/redact`, and `shop/redact` all point to `/api/webhooks/compliance` and HMAC verification is enforced.
 
 ## Billing (Stripe)
 

@@ -21,7 +21,14 @@ export async function GET(req: NextRequest) {
     create: { shop, accessToken },
   });
   // Register product webhooks via REST Admin API
-  const topics = ["products/create", "products/update"];
+  const appUrl = process.env.SHOPIFY_APP_URL || "http://localhost:3000";
+  const topics = [
+    "products/create",
+    "products/update",
+    "customers/data_request",
+    "customers/redact",
+    "shop/redact"
+  ];
   await Promise.all(
     topics.map(async (topic) => {
       try {
@@ -31,13 +38,18 @@ export async function GET(req: NextRequest) {
             "X-Shopify-Access-Token": accessToken,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ webhook: { topic, address: `${process.env.SHOPIFY_APP_URL}/api/webhooks/products`, format: "json" } }),
+          body: JSON.stringify({
+            webhook: {
+              topic,
+              address: `${appUrl}/api/webhooks/${topic.startsWith("products") ? "products" : "compliance"}`,
+              format: "json"
+            }
+          }),
         });
       } catch {}
     })
   );
 
-  const appUrl = process.env.SHOPIFY_APP_URL || "http://localhost:3000";
   const redirectResponse = NextResponse.redirect(`${appUrl}/dashboard?installed=1`);
 
   if (headers) {
