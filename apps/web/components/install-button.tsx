@@ -2,7 +2,6 @@
 
 import { useCallback } from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { buildInstallPath, buildInstallPrefill } from "@/lib/shop-domain";
 
@@ -20,22 +19,18 @@ export function InstallButton({
   shop,
   ...buttonProps
 }: InstallButtonProps) {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-
   const handleClick = useCallback(() => {
-    const shopFromQuery = shop ?? searchParams?.get("shop") ?? "";
-    const installPath = buildInstallPath(shopFromQuery);
+    const installPath = buildInstallPath(shop);
 
     if (installPath === "/install") {
-      const prefill = buildInstallPrefill(shopFromQuery);
+      const prefill = buildInstallPrefill(shop);
       const query = prefill ? `?shop=${encodeURIComponent(prefill)}` : "";
-      router.push(`/install${query}`);
+      window.location.href = `/install${query}`;
       return;
     }
 
     window.location.href = installPath;
-  }, [router, searchParams, shop]);
+  }, [shop]);
 
   const { type, ...restProps } = buttonProps;
 
