@@ -1,10 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { InstallButton } from "@/components/install-button";
 import dynamic from "next/dynamic";
 const Parallax = dynamic(() => import("@/components/visuals/parallax").then(m => m.Parallax), { ssr: false });
 const Layer = dynamic(() => import("@/components/visuals/parallax").then(m => m.Layer), { ssr: false });
 
-export default function Home() {
+interface HomeProps {
+  searchParams?: Record<string, string | string[] | undefined>;
+}
+
+export default function Home({ searchParams }: HomeProps) {
+  const shopParam = searchParams?.shop;
+  const shop = Array.isArray(shopParam) ? shopParam[0] : shopParam;
+
   return (
     <div className="py-8">
       <section className="relative overflow-hidden rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 p-6 md:p-8 text-white shadow-soft hero-panel dark:from-slate-800 dark:to-slate-900">
@@ -14,7 +22,7 @@ export default function Home() {
           <h1 className="text-4xl font-semibold leading-tight animate-fadeUp">Accessible, SEO‑friendly alt text for Shopify — on autopilot</h1>
           <p className="mt-3 text-white/90 animate-fadeUp" style={{animationDelay:'80ms'}}>Ship more inclusive product pages and save time. We detect new product images and generate WCAG‑friendly alt text instantly.</p>
           <div className="mt-6 flex flex-wrap gap-3 animate-fadeUp" style={{animationDelay:'140ms'}}>
-            <Button href="/api/shopify/install?shop=YOUR_SHOP.myshopify.com">Install to store</Button>
+            <InstallButton shop={shop}>Install to store</InstallButton>
             <Button href="/dashboard" variant="ghost" className="bg-transparent text-white border-white/30 hover:bg-white/10">View dashboard</Button>
           </div>
         </div>
@@ -113,7 +121,7 @@ export default function Home() {
         <h2 className="text-xl font-semibold">Ready to make every product more accessible?</h2>
         <p className="mt-2 muted">Install the app and get a 7‑day free trial.</p>
         <div className="mt-4 flex justify-center">
-          <Button href="/api/shopify/install?shop=YOUR_SHOP.myshopify.com">Start free trial</Button>
+          <InstallButton shop={shop}>Start free trial</InstallButton>
         </div>
       </section>
     </div>

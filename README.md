@@ -37,7 +37,7 @@ alttext-saas/
 - Create a Custom app in Partners.
 - Use App URL: your web app URL (e.g. `http://localhost:3000`).
 - Scopes: `read_products,write_products,read_product_listings`.
-- Install URL: `/api/shopify/install?shop=YOUR_SHOP.myshopify.com`.
+- Install URL: `/install` (prompts for your Shopify store domain before redirecting to Shopify).
 
 ## Billing (Stripe)
 

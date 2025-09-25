@@ -3,6 +3,7 @@ import { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
+import { InstallButton } from "@/components/install-button";
 import type { Metadata, Viewport } from "next";
 const ThemeToggle = dynamic(() => import("../components/theme-toggle"), { ssr: false });
 const BackgroundFX = dynamic(() => import("@/components/visuals/background-fx"), { ssr: false });
@@ -62,7 +63,7 @@ function Header() {
         </a>
         <nav className="flex items-center gap-2" aria-label="Primary actions">
           <Button href="/dashboard" variant="ghost">Dashboard</Button>
-          <Button href="/api/shopify/install?shop=YOUR_SHOP.myshopify.com" variant="primary">Install</Button>
+          <InstallButton>Install</InstallButton>
           <Button href="/settings" variant="ghost">Settings</Button>
           <FxToggle />
           <ThemeToggle />

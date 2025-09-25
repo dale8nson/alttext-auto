@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { gsap } from "gsap";
+import { InstallButton } from "@/components/install-button";
 
 export default function StickyCta() {
   const pathname = usePathname();
@@ -48,7 +49,7 @@ export default function StickyCta() {
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-lg border border-slate-200 bg-gradient-to-r from-indigo-600 to-violet-600 px-3 py-2 text-white shadow-soft dark:border-slate-700">
           <div className="text-sm md:text-base font-medium">Start your 7‑day free trial</div>
           <div className="flex items-center gap-2">
-            <a href="/api/shopify/install?shop=YOUR_SHOP.myshopify.com" className="btn btn-primary">Install</a>
+            <InstallButton>Install</InstallButton>
             <a href="/dashboard" className="btn btn-ghost bg-white/10 text-white hover:bg-white/20 dark:bg-transparent">View dashboard</a>
             <button aria-label="Dismiss" onClick={dismiss} className="ml-1 rounded-md bg-white/10 px-2 py-1 text-white hover:bg-white/20">✕</button>
           </div>

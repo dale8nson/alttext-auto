@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
 import { PrismaClient } from "@prisma/client";
+import { InstallButton } from "@/components/install-button";
 const LogsTable = dynamic(() => import("@/components/dashboard/LogsTable"), { ssr: false });
 const WebhooksHealth = dynamic(() => import("@/components/dashboard/WebhooksHealth"), { ssr: false });
 const Parallax = dynamic(() => import("@/components/visuals/parallax").then(m => m.Parallax), { ssr: false });
@@ -68,7 +69,7 @@ export default async function Dashboard() {
             <li>Create or update a product with images</li>
             <li>See alt text appear automatically</li>
           </ol>
-          <Button href="/api/shopify/install?shop=YOUR_SHOP.myshopify.com" className="mt-4 w-full">Install to store</Button>
+          <InstallButton shop={shopDomain} className="mt-4 w-full">Install to store</InstallButton>
           <Button href="/billing" variant="ghost" className="mt-2 w-full">Manage billing</Button>
         </Card>
       </section>
