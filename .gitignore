@@ -19,3 +19,4 @@ apps/web/test-results/
 apps/web/next/
 apps/web/build/
 apps/web/postinstall
+target/
