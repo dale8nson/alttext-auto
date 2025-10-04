@@ -1,0 +1,20 @@
+{
+  // Ensure rust-analyzer links to the nested Cargo project
+  "rust-analyzer.linkedProjects": [
+    "services/captioner-rs/captioner/Cargo.toml"
+  ],
+
+  // Enable proc macros for better diagnostics and hovers
+  "rust-analyzer.procMacro.enable": true,
+
+  // Run clippy/check on save to surface warnings and errors
+  "rust-analyzer.checkOnSave.command": "clippy",
+  "rust-analyzer.diagnostics.enable": true,
+
+  // Ensure hover popovers are enabled (both editor and RA toggles)
+  "editor.hover.enabled": true,
+  // Backwards/forwards compatible toggles for hover actions
+  "rust-analyzer.hoverActions.enable": true,
+  "rust-analyzer.hover.actions.enable": true
+}
+
