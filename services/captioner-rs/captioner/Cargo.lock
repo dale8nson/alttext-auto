@@ -215,8 +215,11 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "bytes",
+ "cc",
  "criterion",
  "image",
+ "libc",
+ "once_cell",
  "reqwest",
  "serde",
  "serde_json",

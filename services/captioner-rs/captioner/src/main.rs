@@ -1,8 +1,6 @@
 use axum::{
     Json, Router,
     extract::State,
-    http::StatusCode,
-    response::IntoResponse,
     routing::{get, post},
 };
 use serde::{Deserialize, Serialize};
@@ -10,10 +8,7 @@ use std::sync::{
     Arc,
     atomic::{AtomicU64, Ordering},
 };
-use tokio::{
-    signal,
-    time::{Duration},
-};
+use tokio::{signal, time::Duration};
 use tower::ServiceBuilder;
 use tower_http::{
     request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer},
@@ -22,10 +17,12 @@ use tower_http::{
 use tracing::{Level, info};
 use tracing_subscriber::EnvFilter;
 
+use captioner::{ApiError, ErrBody, decode, is_jpeg};
+
+use bytes::Bytes;
 use image;
 use image::DynamicImage;
 use reqwest::Client;
-use bytes::Bytes;
 
 struct AppState {
     model_name: &'static str,
@@ -56,20 +53,10 @@ struct BulkResp {
 }
 
 #[derive(Serialize)]
-struct ErrBody {
-    error: String,
-}
-
-#[derive(Serialize)]
 #[serde(tag = "status", content = "data")]
 enum ItemOutcome {
     Ok(CaptionResp),
     Error(ErrBody),
-}
-
-enum ApiError {
-    BadRequest(&'static str),
-    Internal,
 }
 
 fn make_caption(req: &CaptionReq) -> Result<CaptionResp, ApiError> {
@@ -97,55 +84,18 @@ fn make_caption(req: &CaptionReq) -> Result<CaptionResp, ApiError> {
     })
 }
 
-#[cfg(feature = "turbo")]
-fn is_jpeg(bytes: &[u8]) -> bool {
-    bytes.len() >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF
-}
-
 async fn fetch_bytes(http: &Client, url: &str) -> Result<Bytes, ApiError> {
-    let resp = http.get(url).send().await.map_err(|_| ApiError::BadRequest("fetch failed"))?;
+    let resp = http
+        .get(url)
+        .send()
+        .await
+        .map_err(|_| ApiError::BadRequest("fetch failed"))?;
     if !resp.status().is_success() {
         return Err(ApiError::BadRequest("image url not fetchable"));
     }
-    resp.bytes().await.map_err(|_| ApiError::BadRequest("read body failed"))
-
-}
-
-impl IntoResponse for ApiError {
-    fn into_response(self) -> axum::response::Response {
-        match self {
-            ApiError::BadRequest(msg) => {
-                (StatusCode::BAD_REQUEST, Json(ErrBody { error: msg.into() })).into_response()
-            }
-            ApiError::Internal => (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ErrBody {
-                    error: "internal error".into(),
-                }),
-            )
-                .into_response(),
-        }
-    }
-}
-
-async fn decode_image(bytes: Bytes) -> Result<DynamicImage, ApiError> {
-    #[cfg(feature = "turbo")]
-    if is_jpeg(&bytes) {
-        let b = bytes.clone();
-        let res = tokio::task::spawn_blocking(move || {
-            let rgb: image::RgbImage = turbojpeg::decompress_image(&b)
-                .map_err(|_| ApiError::BadRequest("invalid jpeg"))?;
-            Ok::<DynamicImage, ApiError>(DynamicImage::ImageRgb8(rgb))
-        })
+    resp.bytes()
         .await
-        .map_err(|_| ApiError::Internal)??;
-        return Ok(res);
-    }
-
-    tokio::task::spawn_blocking(move || image::load_from_memory(&bytes))
-    .await
-    .map_err(|_| ApiError::Internal)?
-    .map_err(|_| ApiError::BadRequest("invalid image data"))
+        .map_err(|_| ApiError::BadRequest("read body failed"))
 }
 
 async fn health(State(state): State<Arc<AppState>>) -> String {
@@ -158,7 +108,7 @@ async fn caption(
     Json(req): Json<CaptionReq>,
 ) -> Result<Json<CaptionResp>, ApiError> {
     info!("caption called");
-    
+
     state.request_count.fetch_add(1, Ordering::Relaxed);
 
     if req.image_url.trim().is_empty() {
@@ -170,7 +120,21 @@ async fn caption(
     }
 
     let bytes = fetch_bytes(&state.http, &req.image_url).await?;
-    let _img = decode_image(bytes).await?;
+    let _img = {
+        let mut res: Result<DynamicImage, ApiError>;
+
+        #[cfg(feature = "turbo-ffi")]
+        {
+            res = decode(&bytes).await;
+        }
+
+        #[cfg(not(feature = "turbo-ffi"))]
+        {
+            res = decode_image(bytes).await;
+        }
+
+        res
+    };
 
     let resp = make_caption(&req)?;
 
@@ -211,13 +175,13 @@ async fn main() {
     info!("server starting");
 
     let http = Client::builder()
-    .connect_timeout(Duration::from_secs(3))
-    .timeout(Duration::from_secs(10))
-    .tcp_keepalive(Duration::from_secs(30))
-    .pool_idle_timeout(Duration::from_secs(30))
-    .pool_max_idle_per_host(8)
-    .build()
-    .expect("reqwest client");
+        .connect_timeout(Duration::from_secs(3))
+        .timeout(Duration::from_secs(10))
+        .tcp_keepalive(Duration::from_secs(30))
+        .pool_idle_timeout(Duration::from_secs(30))
+        .pool_max_idle_per_host(8)
+        .build()
+        .expect("reqwest client");
 
     let state = Arc::new(AppState {
         model_name: "clip-vit-b16",
@@ -255,4 +219,3 @@ async fn shutdown_signal() {
     let _ = signal::ctrl_c().await;
     println!("\nshutting down...");
 }
-
