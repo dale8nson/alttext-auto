@@ -3,6 +3,8 @@ import crypto from "crypto";
 import { prisma, ensureDatabase } from "@/lib/prisma";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function verifyHmac(req: NextRequest, rawBody: string) {
   const h = req.headers.get("x-shopify-hmac-sha256") || "";
