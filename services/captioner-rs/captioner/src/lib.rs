@@ -1,3 +1,5 @@
+pub mod engine;
+
 #[cfg(feature = "turbo-ffi")]
 use std::{
     cell::RefCell,
@@ -110,9 +112,11 @@ pub async fn decode(jpeg_buf: &Bytes) -> Result<DynamicImage, ApiError> {
         let img = with_tj(|tj3| {
             let (mut w, mut h) = get_size(tj3, b.as_ptr(), b.len())?;
             let capacity = 3 * (w as usize) * (h as usize);
-            let mut dst_rgb = Vec::<u8>::with_capacity( capacity);
+            let mut dst_rgb = Vec::<u8>::with_capacity(capacity);
 
-            unsafe { dst_rgb.set_len(capacity); }
+            unsafe {
+                dst_rgb.set_len(capacity);
+            }
 
             let result = unsafe {
                 decompress(
@@ -127,23 +131,24 @@ pub async fn decode(jpeg_buf: &Bytes) -> Result<DynamicImage, ApiError> {
             if result != 0 {
                 return Err(ApiError::BadRequest("jpeg decompress failed"));
             }
-        
+
             let rgb = image::RgbImage::from_vec(w as u32, h as u32, dst_rgb)
-            .ok_or::<ApiError>(ApiError::BadRequest("invalid jpeg"))?;
+                .ok_or::<ApiError>(ApiError::BadRequest("invalid jpeg"))?;
             Ok(DynamicImage::ImageRgb8(rgb))
         });
         img
-    }).await.map_err(|_| ApiError::BadRequest("decode failed"))?;
+    })
+    .await
+    .map_err(|_| ApiError::BadRequest("decode failed"))?;
     res
 }
-
 
 #[cfg(feature = "turbo-ffi")]
 unsafe extern "C" {
 
     fn init_tj3() -> *mut c_void;
 
-    fn free_tj3(tj3: *mut c_void);
+    fn free_tj3(tj3: *mut c_void) -> c_int;
 
     fn get_dimensions(
         tj3: *mut c_void,
@@ -164,8 +169,8 @@ unsafe extern "C" {
 
 }
 
+#[cfg(feature = "turbo")]
 pub async fn decode_image(bytes: Bytes) -> Result<DynamicImage, ApiError> {
-    #[cfg(feature = "turbo")]
     if is_jpeg(&bytes) {
         let b = bytes.clone();
         let res = tokio::task::spawn_blocking(move || {

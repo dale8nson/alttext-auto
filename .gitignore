@@ -20,3 +20,4 @@ apps/web/next/
 apps/web/build/
 apps/web/postinstall
 target/
+src/ffi/libdecoder.a
