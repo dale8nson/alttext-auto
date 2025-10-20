@@ -1,0 +1,33 @@
+# Fly.io config for the Rust captioner service
+# Run fly launch from the repo root and set `build.dockerfile`
+
+app = "alttext-captioner"
+primary_region = "iad"
+
+[build]
+  dockerfile = "services/captioner-rs/captioner/Dockerfile"
+
+[env]
+  RUST_LOG = "info"
+  CAPTIONER_CORS_PERMISSIVE = "1"
+  # Uncomment to route inference to your GPU server
+  # CAPTIONER_REMOTE_INFER_URL = "https://YOUR_GPU_SERVER.example.com"
+
+[[services]]
+  internal_port = 3005
+  processes = ["app"]
+  protocol = "tcp"
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [services.concurrency]
+    type = "requests"
+    hard_limit = 100
+    soft_limit = 50
+

@@ -1,0 +1,23 @@
+--- a/services/captioner-rs/captioner/Cargo.toml
++++ b/services/captioner-rs/captioner/Cargo.toml
+@@
+-tower-http = { version = "0.6.6", features = ["trace", "request-id"] }
++tower-http = { version = "0.6.6", features = ["trace", "request-id", "cors"] }
+
+--- a/services/captioner-rs/captioner/src/main.rs
++++ b/services/captioner-rs/captioner/src/main.rs
+@@
+-use tower_http::cors::{CorsLayer, Any};
++use tower_http::cors::CorsLayer;
+@@
+-    // CORS: default to permissive for dev; set CAPTIONER_CORS_PERMISSIVE=0 to tighten
+-    let cors = if std::env::var("CAPTIONER_CORS_PERMISSIVE").ok().as_deref() == Some("0") {
+-        CorsLayer::new()
+-            .allow_origin(Any)
+-            .allow_methods(Any)
+-            .allow_headers(Any)
+-    } else {
+-        CorsLayer::permissive()
+-    };
++    // CORS: default to permissive for development
++    let cors = CorsLayer::permissive();

@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+transformers>=4.39
+torch
+Pillow
+accelerate
+huggingface_hub
+
