@@ -32,3 +32,5 @@ src/ffi/libdecoder.a
 *.bin
 *.onnx
 cloudflared
+!tools/notebooks/kaggle_blip_server.ipynb
+!tools/notebooks/colab_blip_server.ipynb
