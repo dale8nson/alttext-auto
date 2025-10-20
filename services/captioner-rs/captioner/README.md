@@ -8,9 +8,8 @@ Endpoints
 
 Remote Inference (optional)
 
-- Set CAPTIONER_REMOTE_INFER_URL to a deployed FastAPI server (see tools/blip_infer_server/server.py).
-- When set, the service calls POST {REMOTE}/v1/infer with { image_url, title } and uses the returned caption/tags.
-- On failure, it falls back to local ONNX inference.
+- Set CAPTIONER_REMOTE_INFER_URLS to a comma-separated list of endpoints (or CAPTIONER_REMOTE_INFER_URL for a single endpoint) pointing at the FastAPI server (see tools/blip_infer_server/server.py).
+- The service tries endpoints in round-robin order per request and fails over on errors/timeouts (429/5xx included). If all endpoints fail, it falls back to local ONNX inference.
 
 Shopify Guidelines
 
@@ -23,4 +22,3 @@ Deploy to Fly.io
   fly launch --no-deploy --copy-config --name YOUR_APP --region iad
   fly secrets set ...
   fly deploy
-

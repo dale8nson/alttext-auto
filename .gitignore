@@ -21,3 +21,14 @@ apps/web/build/
 apps/web/postinstall
 target/
 src/ffi/libdecoder.a
+# Python/venv/notebooks and large artifacts
+.venv-blip/
+**/.venv*/
+**/__pycache__/
+**/.ipynb_checkpoints/
+*.ipynb
+*.pt
+*.safetensors
+*.bin
+*.onnx
+cloudflared

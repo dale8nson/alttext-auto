@@ -8,9 +8,11 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::sync::{
-    Arc,
-    atomic::{AtomicU64, Ordering},
+    Arc, Mutex,
+    atomic::{AtomicU64, AtomicUsize, Ordering},
 };
+use std::collections::HashMap;
+use std::time::Instant as StdInstant;
 #[cfg(feature = "turbo-ffi")]
 use std::time::Instant;
 
@@ -41,8 +43,14 @@ struct AppState {
     model_name: &'static str,
     request_count: AtomicU64,
     http: Client,
-    // Optional remote inference endpoint for GPU-backed model
-    remote_infer_url: Option<String>,
+    // Optional remote inference endpoints for GPU-backed model; tried in order
+    remote_infer_urls: Vec<String>,
+    // Round-robin index for remote endpoints
+    remote_rr: AtomicUsize,
+    // Backoff table for endpoints (until Instant)
+    remote_backoff: Mutex<HashMap<String, StdInstant>>,
+    // Backoff duration in seconds
+    remote_backoff_secs: u64,
     #[cfg(feature = "turbo-ffi")]
     decode_limit: Arc<Semaphore>,
     engine_tx: tokio::sync::mpsc::Sender<engine::Job>,
@@ -327,11 +335,15 @@ async fn caption(
     }
 
     // Prefer remote inference when configured; fallback to local engine.
-    let eng_out = if let Some(ref base_url) = state.remote_infer_url {
-        match remote_infer(&state.http, base_url, &req.image_url, req.product_title.as_deref()).await {
+    let eng_out = if !state.remote_infer_urls.is_empty() {
+        let n = state.remote_infer_urls.len();
+        let start = state.remote_rr.fetch_add(1, Ordering::Relaxed) % n.max(1);
+        let mut try_urls = rotate_urls(&state.remote_infer_urls, start);
+        try_urls = filter_backoff(&state, try_urls);
+        match remote_infer_failover_backoff(&state, &try_urls, &req.image_url, req.product_title.as_deref()).await {
             Ok(o) => o,
             Err(e) => {
-                tracing::warn!(err = %e, "remote inference failed; falling back to local");
+                tracing::warn!(err = %e, "all remote inference endpoints failed; falling back to local");
                 local_engine_run(&state, &req).await?
             }
         }
@@ -400,7 +412,7 @@ async fn remote_infer(http: &Client, base_url: &str, image_url: &str, title: Opt
     let req = RemoteInferReq { image_url, title };
     let resp = http
         .post(url)
-        .timeout(Duration::from_secs(20))
+        .timeout(Duration::from_secs(12))
         .json(&req)
         .send()
         .await
@@ -410,6 +422,77 @@ async fn remote_infer(http: &Client, base_url: &str, image_url: &str, title: Opt
     }
     let r: RemoteInferResp = resp.json().await.map_err(|_| ApiError::Internal)?;
     Ok(engine::EngineOutput { embed_dim: 0, embedding: vec![], caption: r.caption, tags: r.tags })
+}
+
+enum RemoteError { Status(u16), Send, Parse }
+
+async fn remote_infer_try(http: &Client, base_url: &str, image_url: &str, title: Option<&str>) -> std::result::Result<engine::EngineOutput, RemoteError> {
+    let url = format!("{}/v1/infer", base_url.trim_end_matches('/'));
+    let req = RemoteInferReq { image_url, title };
+    let resp = http
+        .post(url)
+        .timeout(Duration::from_secs(12))
+        .json(&req)
+        .send()
+        .await
+        .map_err(|_| RemoteError::Send)?;
+    let code = resp.status().as_u16();
+    if !(200..300).contains(&code) {
+        return Err(RemoteError::Status(code));
+    }
+    let r: RemoteInferResp = resp.json().await.map_err(|_| RemoteError::Parse)?;
+    Ok(engine::EngineOutput { embed_dim: 0, embedding: vec![], caption: r.caption, tags: r.tags })
+}
+
+async fn remote_infer_failover_backoff(state: &Arc<AppState>, urls: &[String], image_url: &str, title: Option<&str>) -> Result<engine::EngineOutput> {
+    let mut last_err: Option<String> = None;
+    for u in urls {
+        match remote_infer_try(&state.http, u, image_url, title).await {
+            Ok(o) => return Ok(o),
+            Err(e) => {
+                match e {
+                    RemoteError::Status(code) => {
+                        tracing::warn!(endpoint = %u, status = %code, "remote endpoint status; backing off if throttled");
+                        if code == 429 || code >= 500 { mark_backoff(state, u); }
+                        last_err = Some(format!("status:{}", code));
+                    }
+                    RemoteError::Send => {
+                        tracing::warn!(endpoint = %u, "remote endpoint send failed; backing off");
+                        mark_backoff(state, u);
+                        last_err = Some("send failed".into());
+                    }
+                    RemoteError::Parse => {
+                        tracing::warn!(endpoint = %u, "remote endpoint parse failed");
+                        last_err = Some("parse failed".into());
+                    }
+                }
+            }
+        }
+    }
+    Err(ApiError::BadRequest(Cow::Owned(last_err.unwrap_or_else(|| "all remote endpoints failed".into()))))
+}
+
+fn rotate_urls(urls: &[String], start: usize) -> Vec<String> {
+    if urls.is_empty() { return vec![]; }
+    let n = urls.len();
+    let mut out = Vec::with_capacity(n);
+    for i in 0..n {
+        out.push(urls[(start + i) % n].clone());
+    }
+    out
+}
+
+fn filter_backoff(state: &Arc<AppState>, urls: Vec<String>) -> Vec<String> {
+    if urls.is_empty() { return urls; }
+    let now = StdInstant::now();
+    let m = state.remote_backoff.lock().unwrap();
+    urls.into_iter().filter(|u| m.get(u).map(|&until| now >= until).unwrap_or(true)).collect()
+}
+
+fn mark_backoff(state: &Arc<AppState>, url: &str) {
+    let until = StdInstant::now() + std::time::Duration::from_secs(state.remote_backoff_secs);
+    let mut m = state.remote_backoff.lock().unwrap();
+    m.insert(url.to_string(), until);
 }
 
 async fn caption_bulk(
@@ -422,14 +505,15 @@ async fn caption_bulk(
 
     // Process items concurrently for throughput.
     let mut handles = Vec::with_capacity(req.items.len());
-    let remote_url = state.remote_infer_url.clone();
+    let remote_urls = state.remote_infer_urls.clone();
     for item in req.items.into_iter() {
         let http = state.http.clone();
         let engine_tx = state.engine_tx.clone();
         #[cfg(feature = "turbo-ffi")]
         let decode_limit = state.decode_limit.clone();
         let model_name = state.model_name;
-        let remote_url = remote_url.clone();
+        let remote_urls = remote_urls.clone();
+        let state_cl = state.clone();
         handles.push(tokio::spawn(async move {
             // validate URL early
             if item.image_url.trim().is_empty()
@@ -439,8 +523,16 @@ async fn caption_bulk(
             }
 
             // Choose remote or local path
-            let eng_out = if let Some(ref base_url) = remote_url {
-                match remote_infer(&http, base_url, &item.image_url, item.product_title.as_deref()).await {
+            let eng_out = if !remote_urls.is_empty() {
+                // Distribute requests by hashing the URL to choose the starting endpoint
+                use std::collections::hash_map::DefaultHasher;
+                use std::hash::{Hash, Hasher};
+                let mut hasher = DefaultHasher::new();
+                item.image_url.hash(&mut hasher);
+                let start = (hasher.finish() as usize) % remote_urls.len().max(1);
+                let try_urls = rotate_urls(&remote_urls, start);
+                // No backoff state in this task: simply try in computed order
+                match remote_infer_failover_backoff(&state_cl, &try_urls, &item.image_url, item.product_title.as_deref()).await {
                     Ok(o) => o,
                     Err(_) => {
                         // Fallback to local on error
@@ -566,6 +658,8 @@ async fn main() {
         blip_kv = %std::env::var("CAPTIONER_BLIP_KV").unwrap_or_else(|_| "(default)".into()),
         blip_prefix = %std::env::var("CAPTIONER_BLIP_PREFIX").unwrap_or_else(|_| "(default)".into()),
         cors_mode = %std::env::var("CAPTIONER_CORS_PERMISSIVE").unwrap_or_else(|_| "(default)".into()),
+        remote_endpoints = %std::env::var("CAPTIONER_REMOTE_INFER_URLS").unwrap_or_else(|_| "(none)".into()),
+        remote_backoff_secs = %std::env::var("CAPTIONER_REMOTE_BACKOFF_SECS").unwrap_or_else(|_| "(default)".into()),
         "env configured"
     );
 
@@ -573,7 +667,22 @@ async fn main() {
         model_name: "onnx32-open_clip-ViT-B-16-openai-visual",
         request_count: AtomicU64::new(0),
         http,
-        remote_infer_url: std::env::var("CAPTIONER_REMOTE_INFER_URL").ok().filter(|s| !s.trim().is_empty()),
+        remote_infer_urls: {
+            let mut v: Vec<String> = std::env::var("CAPTIONER_REMOTE_INFER_URLS")
+                .ok()
+                .map(|s| s.split(',').map(|p| p.trim().to_string()).filter(|x| !x.is_empty()).collect())
+                .unwrap_or_else(Vec::new);
+            if v.is_empty() {
+                if let Ok(u1) = std::env::var("CAPTIONER_REMOTE_INFER_URL") {
+                    let u1 = u1.trim().to_string();
+                    if !u1.is_empty() { v.push(u1); }
+                }
+            }
+            v
+        },
+        remote_rr: AtomicUsize::new(0),
+        remote_backoff: Mutex::new(HashMap::new()),
+        remote_backoff_secs: std::env::var("CAPTIONER_REMOTE_BACKOFF_SECS").ok().and_then(|s| s.parse().ok()).unwrap_or(300),
         #[cfg(feature = "turbo-ffi")]
         decode_limit: Arc::new(Semaphore::new(permits)),
         engine_tx: engine.sender(),
@@ -648,7 +757,10 @@ mod tests {
             model_name: "test-model",
             request_count: AtomicU64::new(0),
             http: Client::new(),
-            remote_infer_url: None,
+            remote_infer_urls: Vec::new(),
+            remote_rr: AtomicUsize::new(0),
+            remote_backoff: Mutex::new(HashMap::new()),
+            remote_backoff_secs: 60,
             #[cfg(feature = "turbo-ffi")]
             decode_limit: Arc::new(Semaphore::new(2)),
             engine_tx: tx,
