@@ -27,14 +27,17 @@ Kaggle Notebook (preferred first)
        if m: public_url = m.group(0); break
    print("PUBLIC_URL=", public_url)
    # Keep this cell running to keep the tunnel alive; open a new cell to continue.
-5) Copy the printed PUBLIC_URL and set in your Rust env as first endpoint.
+5) Auto‑register with the captioner (preferred). Set envs in the notebook:
+   %env CAPTIONER_REGISTRY_URL=https://YOUR_CAPTIONER.fly.dev
+   %env CAPTIONER_REGISTRY_TOKEN=YOUR_SECRET  # set the same secret on Fly via `fly secrets set`
+   %env PROVIDER=kaggle
+   Then run the registration cell (included in the notebook). It renews every 10 minutes.
 
 Colab Notebook (fallback when Kaggle quota is exhausted)
 
 Use the same steps as Kaggle. If you expect quotas to exhaust, configure Rust with both endpoints:
 
-- CAPTIONER_REMOTE_INFER_URLS="https://<KAGGLE_URL>,https://<COLAB_URL>"
-- Optionally set CAPTIONER_REMOTE_BACKOFF_SECS=3600 to avoid retrying a throttled endpoint for ~1h.
+Prefer dynamic registration over static URLs. Captioner will prefer providers in CAPTIONER_PROVIDER_ORDER (default kaggle,colab) and back off throttled endpoints for CAPTIONER_REMOTE_BACKOFF_SECS seconds.
 
 Rust service configuration
 
@@ -46,4 +49,3 @@ Security notes
 
 - Quick Tunnels are public and un-authenticated by default. Use random endpoints and rotate often; do not expose admin endpoints.
 - Keep the notebook private and avoid printing secrets.
-
